@@ -1,61 +1,66 @@
 "use client";
-import { act, useEffect, useState } from "react";
 
 export default function Word({
   word,
   typoWord,
   active,
-}: // activeCur,
-{
+  index,
+  ref,
+}: {
   word: string;
   typoWord: string;
   active: boolean;
-  // activeCur: boolean;
+  index: number;
+  ref: React.Ref<HTMLDivElement>;
 }) {
   const typoLetters: string[] = typoWord?.split("");
   const colorCheck = function (typo: string | undefined, lett: string) {
-    if (typo == undefined) return "#666";
-    return typo == lett ? "white" : "red";
+    if (typo == undefined) return "#646669";
+    return typo == lett ? "#d1d0c5" : "#ca4754";
+  };
+  const opacityCheck = function (typo: string | undefined) {
+    if (typo) return "100";
   };
   const cursorRight = function (index: number) {
-    if (active) return typoLetters?.length - 1 == index ? "yellow" : "";
+    if (active) return typoLetters?.length - 1 == index ? "#e2b714" : "";
   };
 
   return (
-    <span
-      className={`mr-4 border-l-[3px] border-transparent tracking-tight`}
+    <div
+      className={`flex flex-wrap gap-0 justify-start items-start mr-2 mb-4 border-l-[3px] border-transparent tracking-tight select-none ${
+        active && index == 0 && typoLetters?.length < 1 && "blinking-cursor"
+      }`}
       style={{
         borderColor:
-          active && typoLetters?.length < 1 ? "yellow" : "transparent",
+          active && typoLetters?.length < 1 ? "#e2b714" : "transparent",
       }}
+      ref={active ? ref : null}
     >
       {word.split("").map((lett, index) => (
         <span
           key={index}
-          className={`border-r-[3px] border-transparent`}
+          className={`border-r-[3px] border-transparent opacity-50`}
           style={{
             color: colorCheck(typoLetters?.[index], lett),
             borderColor: cursorRight(index),
+            opacity: opacityCheck(typoLetters?.[index]),
           }}
         >
           {lett}
         </span>
       ))}
-      {typoLetters?.length > word.split("").length ? (
+      {typoLetters?.length > word.split("").length &&
         typoLetters.slice(word.split("").length).map((typErr, index) => (
           <span
             key={index}
-            className={`border-r-2 border-transparent text-red-600`}
+            className={`border-r-2 border-transparent text-[#ca4754]`}
             style={{
               borderColor: cursorRight(index + word.split("").length),
             }}
           >
             {typErr}
           </span>
-        ))
-      ) : (
-        <span></span>
-      )}
-    </span>
+        ))}
+    </div>
   );
 }

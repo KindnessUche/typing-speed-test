@@ -1,63 +1,104 @@
 "use client";
-import {
-  useEffect,
-  useState,
-  useRef,
-  KeyboardEvent as ReactKeyboardEvent,
-} from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Word from "./Word";
 
 export default function TypePage({ text }: { text: string }) {
   const [typo, setTypo] = useState("");
   const [fin, setFin] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    // Automatically focus the input when the component mounts
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, []);
-
+  const [timer, setTimer] = useState<number | null>(null);
+  const activeWordRef = useRef<HTMLDivElement>(null);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
   const word = text.split(" ");
   const typoWord = typo.split(" ");
-  useEffect(
-    function () {
-      if (typoWord.length == word.length) {
-        setFin(true);
-      }
-    },
-    [typo]
-  );
-  const handleKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
-    const key = event.key;
-
-    // Prevent default behavior for arrow keys
-    if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(key)) {
-      event.preventDefault();
-      return;
+  useEffect(() => {
+    if (
+      typoWord.length === word.length &&
+      typoWord[word.length - 1]?.length === word[word.length - 1].length
+    ) {
+      setFin(true);
     }
-  };
+  }, [typo]);
+  // FIX ME WHEN YOU WAKE UP
+  useEffect(() => {
+    const handleTimer = () => {
+      timerRef.current = setInterval(() => {
+        setTimer((prev) => {
+          if (prev === 0) {
+            clearInterval(timerRef.current!);
+            setFin(true);
+            return prev;
+          }
+          return prev === null ? 30 : prev - 1;
+        });
+      }, 1000);
+      document.removeEventListener("keydown", handleTimer);
+    };
+    document.addEventListener("keydown", handleTimer);
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+      document.removeEventListener("keydown", handleTimer);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const key = event.key;
+
+      // Prevent default behavior for arrow keys
+      if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(key)) {
+        event.preventDefault();
+        return;
+      }
+
+      // Update typo state based on key press
+      if (key === "Backspace") {
+        // Prevent backspace if the current word is empty
+        if (typoWord[typoWord.length - 1]?.length > 0) {
+          setTypo((prev) => prev.slice(0, -1));
+        }
+      } else if (key === " ") {
+        // Prevent spacebar if the current word is empty
+        if (typoWord[typoWord.length - 1]?.length > 0) {
+          setTypo((prev) => prev + key);
+        }
+      } else if (key.length === 1) {
+        setTypo((prev) => prev + key);
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [typo]);
+  useEffect(() => {
+    if (activeWordRef.current) {
+      activeWordRef.current.scrollIntoView({
+        behavior: "smooth",
+        inline: "start",
+      });
+    }
+  }, [typo]);
+
   return (
-    <div className="relative flex flex-wrap m-auto text-5xl justify-center max-w-5xl p-8 text-left  bg-green-200">
-      {word.map((word, index) => (
-        <Word
-          word={word}
-          key={index}
-          typoWord={typoWord[index]}
-          active={typoWord.length - 1 === index}
-          // activeCur={activeCur}
-        />
-      ))}
-      <input
-        className="absolute w-full h-full bg-transparent opacity-0 outline-none"
-        onChange={(e) => setTypo(e.target.value)}
-        onKeyDown={handleKeyDown}
-        disabled={fin}
-        value={typo}
-        ref={inputRef}
-      />
-      {fin && <div>Baba, game don finish rest</div>}
+    <div className="mt-52 text-4xl">
+      <div className="text-[#e2b714] h-10 self-start ">{timer}</div>
+      <div className="mt-5 relative flex flex-wrap leading-10 max-w-7xl text-left bg-[#323437] font-normal font-mono h-[160px] overflow-x-visible overflow-y-auto pointer-events-none scroll-none">
+        {word.map((word, index) => (
+          <Word
+            word={word}
+            key={index}
+            typoWord={typoWord[index]}
+            active={typoWord.length - 1 === index}
+            index={index}
+            ref={activeWordRef}
+          />
+        ))}
+        {fin && <div>Baba, game don finish rest</div>}
+      </div>
     </div>
   );
 }
