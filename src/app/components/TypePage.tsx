@@ -1,15 +1,18 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import Word from "./Word";
+import FinishedPage from "./FinishedPage";
 
 export default function TypePage({ text }: { text: string }) {
   const [typo, setTypo] = useState("");
   const [fin, setFin] = useState(false);
-  const [timer, setTimer] = useState<number | null>(null);
+  const [timer, setTimer] = useState<number>(0);
+  const [wpmChart, setWpmChart] = useState<number[]>([0]);
   const activeWordRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const word = text.split(" ");
   const typoWord = typo.split(" ");
+  const [prevLen, setPrevLen] = useState([0]);
   useEffect(() => {
     if (
       typoWord.length === word.length &&
@@ -18,9 +21,11 @@ export default function TypePage({ text }: { text: string }) {
       setFin(true);
     }
   }, [typo]);
-  // FIX ME WHEN YOU WAKE UP
+  // Timer and WPM logic for chart
   useEffect(() => {
-    const handleTimer = () => {
+    const handleTimer = (e: KeyboardEvent) => {
+      if (e.key) document.removeEventListener("keydown", handleTimer);
+      setTimer(30);
       timerRef.current = setInterval(() => {
         setTimer((prev) => {
           if (prev === 0) {
@@ -28,10 +33,9 @@ export default function TypePage({ text }: { text: string }) {
             setFin(true);
             return prev;
           }
-          return prev === null ? 30 : prev - 1;
+          return (prev ?? 30) - 1;
         });
       }, 1000);
-      document.removeEventListener("keydown", handleTimer);
     };
     document.addEventListener("keydown", handleTimer);
     return () => {
@@ -41,6 +45,12 @@ export default function TypePage({ text }: { text: string }) {
       document.removeEventListener("keydown", handleTimer);
     };
   }, []);
+  useEffect(() => {
+    setPrevLen((len) => [...len, typo.length]);
+    const lettersTyped = prevLen.slice(-1)[0] - prevLen.slice(-2)[0];
+    const wpm = Math.round(lettersTyped / (5 * 0.01667));
+    setWpmChart((prevChart) => [...prevChart, wpm]);
+  }, [timer]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -64,7 +74,9 @@ export default function TypePage({ text }: { text: string }) {
           setTypo((prev) => prev + key);
         }
       } else if (key.length === 1) {
-        setTypo((prev) => prev + key);
+        setTypo((prev) => {
+          return prev + key;
+        });
       }
     };
 
@@ -84,21 +96,28 @@ export default function TypePage({ text }: { text: string }) {
   }, [typo]);
 
   return (
-    <div className="mt-52 text-4xl">
-      <div className="text-[#e2b714] h-10 self-start ">{timer}</div>
-      <div className="mt-5 relative flex flex-wrap leading-10 max-w-7xl text-left bg-[#323437] font-normal font-mono h-[160px] overflow-x-visible overflow-y-auto pointer-events-none scroll-none">
-        {word.map((word, index) => (
-          <Word
-            word={word}
-            key={index}
-            typoWord={typoWord[index]}
-            active={typoWord.length - 1 === index}
-            index={index}
-            ref={activeWordRef}
-          />
-        ))}
-        {fin && <div>Baba, game don finish rest</div>}
+    <div className="">
+      <div className={`flex flex-col mt-52 text-4xl ${fin && "hidden"}`}>
+        <div className="text-[#e2b714] h-10 self-start flex ">
+          {timer !== 0 && timer}
+          {wpmChart.map((speed) => (
+            <div>{speed}</div>
+          ))}
+        </div>
+        <div className="mt-5 relative flex flex-wrap leading-10 max-w-7xl text-left bg-[#323437] font-normal font-mono h-[160px] overflow-x-visible overflow-y-auto pointer-events-none scroll-none">
+          {word.map((word, index) => (
+            <Word
+              word={word}
+              key={index}
+              typoWord={typoWord[index]}
+              active={typoWord.length - 1 === index}
+              index={index}
+              ref={activeWordRef}
+            />
+          ))}
+        </div>
       </div>
+      <FinishedPage />
     </div>
   );
 }
