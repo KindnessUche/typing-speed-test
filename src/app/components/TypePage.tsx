@@ -48,7 +48,7 @@ export default function TypePage({ text }: { text: string }) {
   useEffect(() => {
     setPrevLen((len) => [...len, typo.length]);
     const lettersTyped = prevLen.slice(-1)[0] - prevLen.slice(-2)[0];
-    const wpm = Math.round(lettersTyped / (5 * 0.01667));
+    const wpm = Math.round((lettersTyped / 5) * 60);
     setWpmChart((prevChart) => [...prevChart, wpm]);
   }, [timer]);
 
@@ -100,9 +100,6 @@ export default function TypePage({ text }: { text: string }) {
       <div className={`flex flex-col mt-52 text-4xl ${fin && "hidden"}`}>
         <div className="text-[#e2b714] h-10 self-start flex ">
           {timer !== 0 && timer}
-          {wpmChart.map((speed) => (
-            <div>{speed}</div>
-          ))}
         </div>
         <div className="mt-5 relative flex flex-wrap leading-10 max-w-7xl text-left bg-[#323437] font-normal font-mono h-[160px] overflow-x-visible overflow-y-auto pointer-events-none scroll-none">
           {word.map((word, index) => (
@@ -117,7 +114,10 @@ export default function TypePage({ text }: { text: string }) {
           ))}
         </div>
       </div>
-      <FinishedPage />
+      <div className="w-full">
+        {/* {fin && <FinishedPage chartData={wpmChart} fin={fin} />} */}
+        <FinishedPage chartData={wpmChart} fin={fin} />
+      </div>
     </div>
   );
 }
