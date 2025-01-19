@@ -4,14 +4,33 @@
 // }));
 import * as React from "react";
 import { LineChart } from "@mui/x-charts/LineChart";
-
-export default function Chart() {
+export default function Chart({ wpm, raw }: { wpm: number[]; raw: number[] }) {
   return (
     <LineChart
+      bottomAxis={{
+        tickLabelStyle: {
+          textAnchor: "middle",
+          fontSize: 12,
+          fill: "#646669",
+        },
+      }}
+      leftAxis={{
+        labelStyle: {
+          fontSize: 14,
+        },
+        tickLabelStyle: {
+          textAnchor: "middle",
+          fontSize: 12,
+        },
+      }}
       sx={{
         //change left yAxis label styles
         "& .MuiChartsAxis-left .MuiChartsAxis-tickLabel": {
           strokeWidth: "0.4",
+          fill: "#646669",
+        },
+        "& .MuiChartsAxis-left .MuiChartsAxis-label": {
+          // strokeWidth: "0.4",
           fill: "#646669",
         },
         "& .MuiChartsAxis-left .MuiChartsAxis-tick": {
@@ -36,13 +55,13 @@ export default function Chart() {
         },
         // leftAxis Line Styles
         "& .MuiChartsAxis-left .MuiChartsAxis-line": {
-          stroke: "#00000FF",
+          stroke: "#646669",
           strokeWidth: 0,
         },
       }}
       xAxis={[
         {
-          data: Array.from({ length: 31 }, (_, i) => i),
+          data: Array.from({ length: 30 }, (_, i) => i + 1),
           labelStyle: {
             fill: "#646669",
           }, // Add title to x-axis
@@ -52,35 +71,32 @@ export default function Chart() {
       ]}
       yAxis={[
         {
-          label: "Words Per Minute (WPM)",
+          label: "Words Per Minute",
           labelStyle: { fill: "#646669" }, // Add title to y-axis
           disableLine: true,
+
+          hideTooltip: true,
         },
       ]}
       series={[
         {
           curve: "catmullRom",
-          data: [
-            0, 50, 28, 45, 45, 39, 42, 41, 51, 42, 53, 54, 45, 48, 49, 48, 29,
-            40, 44, 45, 46, 37, 34, 35, 46, 47, 44, 25, 46, 45, 20,
-          ],
+          data: raw.slice(3),
           // area: true,
           label: "Raw",
           color: "#646669",
         },
         {
           curve: "catmullRom",
-          data: [
-            0, 35, 46, 37, 34, 25, 36, 35, 30, 30, 28, 35, 25, 29, 32, 31, 31,
-            32, 33, 34, 25, 28, 29, 28, 29, 30, 24, 25, 26, 27, 34,
-          ],
+          data: wpm.slice(3),
           label: "WPM",
           color: "#e2b714",
         },
       ]}
-      width={1200}
+      width={1000}
       height={250}
       grid={{ vertical: true, horizontal: true }}
+      slotProps={{ legend: { hidden: true } }}
     />
   );
 }

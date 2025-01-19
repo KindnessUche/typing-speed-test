@@ -12,7 +12,10 @@ export default function TypePage({ text }: { text: string }) {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const word = text.split(" ");
   const typoWord = typo.split(" ");
-  const [prevLen, setPrevLen] = useState([0]);
+  const [prevLen, setPrevLen] = useState([typo.length]);
+  const [accTotal, setAccTotal] = useState(0);
+  const avgWpm = Math.round(((typo.length / 5) * 2 * accTotal) / 100);
+  const rawWpm = Math.round((typo.length / 5) * 2);
   useEffect(() => {
     if (
       typoWord.length === word.length &&
@@ -94,6 +97,24 @@ export default function TypePage({ text }: { text: string }) {
       });
     }
   }, [typo]);
+  // Accuracy logic
+  useEffect(() => {
+    if (fin) {
+      const totalCorrectKeys = typoWord
+        .map((tword, i) =>
+          tword.split("").filter((tw, j) => tw == word[i].split("")[j])
+        )
+        .flat(2).length;
+      const totalKeys = typoWord.map((tword) => tword.split("")).flat(2).length;
+      setAccTotal(Math.round((totalCorrectKeys / totalKeys) * 100));
+    }
+  }, [fin]);
+
+  const restartGame = function () {
+    // setTypo("");
+    // clearInterval(timerRef.current!);
+    // setWpmChart([0]);
+  };
 
   return (
     <div className="">
@@ -113,10 +134,18 @@ export default function TypePage({ text }: { text: string }) {
             />
           ))}
         </div>
+        <button onClick={restartGame}>Retry</button>
       </div>
       <div className="w-full">
-        {/* {fin && <FinishedPage chartData={wpmChart} fin={fin} />} */}
-        <FinishedPage chartData={wpmChart} fin={fin} />
+        {fin && (
+          <FinishedPage
+            chartData={wpmChart}
+            fin={fin}
+            accuracy={accTotal}
+            avgWpm={avgWpm}
+            rawWpm={rawWpm}
+          />
+        )}
       </div>
     </div>
   );

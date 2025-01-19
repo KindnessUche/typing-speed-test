@@ -10,6 +10,7 @@ export default async function Home() {
         text={
           "hwik sdh d dhn h fj v s fhudjsfhu sxh fjf shj fhujf nsujz fhufjz fhusjzfn huzhsfjf ujznfjnzs fjkncm sff hfshweuwhjd nfyegy hjff df sg f thr g fds ghgfdergtygfds chgf df h yf dghgh fddfhj  f gfh fd fgb"
         }
+        // text={story}
       />
     </div>
   );
