@@ -1,21 +1,36 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/router";
 import Word from "./Word";
 import FinishedPage from "./FinishedPage";
+import { FiRefreshCcw } from "react-icons/fi";
+import { MdRefresh } from "react-icons/md";
 
-export default function TypePage({ text }: { text: string }) {
+export default function TypePage({
+  initialText,
+  initialNextStory,
+  fetchNewStory,
+}: {
+  initialText: string;
+  initialNextStory: string;
+  fetchNewStory: () => Promise<string>;
+}) {
+  const [text, setText] = useState(initialText);
   const [typo, setTypo] = useState("");
+  const [nextStory, setNextStory] = useState(initialNextStory);
   const [fin, setFin] = useState(false);
   const [timer, setTimer] = useState<number>(0);
   const [wpmChart, setWpmChart] = useState<number[]>([0]);
   const activeWordRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const word = text.split(" ");
   const typoWord = typo.split(" ");
   const [prevLen, setPrevLen] = useState([typo.length]);
   const [accTotal, setAccTotal] = useState(0);
-  const avgWpm = Math.round(((typo.length / 5) * 2 * accTotal) / 100);
-  const rawWpm = Math.round((typo.length / 5) * 2);
+  const avgWpm = Math.round(((typo.length / 6) * 2 * accTotal) / 100);
+  const rawWpm = Math.round((typo.length / 6) * 2);
+  // const router = useRouter();
   useEffect(() => {
     if (
       typoWord.length === word.length &&
@@ -51,7 +66,7 @@ export default function TypePage({ text }: { text: string }) {
   useEffect(() => {
     setPrevLen((len) => [...len, typo.length]);
     const lettersTyped = prevLen.slice(-1)[0] - prevLen.slice(-2)[0];
-    const wpm = Math.round((lettersTyped / 5) * 60);
+    const wpm = Math.round((lettersTyped / 6) * 60);
     setWpmChart((prevChart) => [...prevChart, wpm]);
   }, [timer]);
 
@@ -110,19 +125,47 @@ export default function TypePage({ text }: { text: string }) {
     }
   }, [fin]);
 
-  const restartGame = function () {
-    // setTypo("");
-    // clearInterval(timerRef.current!);
-    // setWpmChart([0]);
+  const restartGame = async () => {
+    if (nextStory) {
+      setText(nextStory);
+      setTypo("");
+      setFin(false);
+      setTimer(0);
+      setWpmChart([]);
+      setPrevLen([0]);
+      setAccTotal(0);
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+      const handleTimer = (e: KeyboardEvent) => {
+        if (e.key) document.removeEventListener("keydown", handleTimer);
+        setTimer(30);
+        timerRef.current = setInterval(() => {
+          setTimer((prev) => {
+            if (prev === 0) {
+              clearInterval(timerRef.current!);
+              setFin(true);
+              return prev;
+            }
+            return (prev ?? 30) - 1;
+          });
+        }, 1000);
+      };
+      document.addEventListener("keydown", handleTimer);
+
+      // Fetch the next story in the background
+      const newNextStory = await fetchNewStory();
+      if (newNextStory) setNextStory(newNextStory);
+    }
   };
 
   return (
-    <div className="">
+    <div className="max-w-7xl ">
       <div className={`flex flex-col mt-52 text-4xl ${fin && "hidden"}`}>
         <div className="text-[#e2b714] h-10 self-start flex ">
           {timer !== 0 && timer}
         </div>
-        <div className="mt-5 relative flex flex-wrap leading-10 max-w-7xl text-left bg-[#323437] font-normal font-mono h-[160px] overflow-x-visible overflow-y-auto pointer-events-none scroll-none">
+        <div className="mt-5 relative flex flex-wrap leading-10 text-left bg-[#323437] font-normal font-mono h-[160px] overflow-x-visible overflow-y-auto pointer-events-none scroll-none">
           {word.map((word, index) => (
             <Word
               word={word}
@@ -134,7 +177,16 @@ export default function TypePage({ text }: { text: string }) {
             />
           ))}
         </div>
-        <button onClick={restartGame}>Retry</button>
+        <div className="mx-auto">
+          <button
+            onClick={restartGame}
+            tabIndex={-1}
+            className="mr-10 mt-7 text-[#646669] hover:text-[#d1d0c5] text-2xl p-3"
+            onMouseDown={(e) => e.preventDefault()}
+          >
+            <MdRefresh className="" />
+          </button>
+        </div>
       </div>
       <div className="w-full">
         {fin && (
@@ -144,6 +196,7 @@ export default function TypePage({ text }: { text: string }) {
             accuracy={accTotal}
             avgWpm={avgWpm}
             rawWpm={rawWpm}
+            restartGame={restartGame}
           />
         )}
       </div>

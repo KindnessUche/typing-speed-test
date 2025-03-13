@@ -18,16 +18,13 @@ export default function Word({
     if (typo == undefined) return "#646669";
     return typo == lett ? "#d1d0c5" : "#ca4754";
   };
-  const opacityCheck = function (typo: string | undefined) {
-    if (typo) return "100";
-  };
   const cursorRight = function (index: number) {
     if (active) return typoLetters?.length - 1 == index ? "#e2b714" : "";
   };
 
   return (
     <div
-      className={`flex flex-wrap gap-0 justify-start items-start mr-2 mb-4 border-l-[3px] border-transparent tracking-tight select-none ${
+      className={`flex flex-wrap gap-0 justify-start items-start mr-5 mb-4 border-l-[3px] border-transparent tracking-tight select-none ${
         active && index == 0 && typoLetters?.length < 1 && "blinking-cursor"
       }`}
       style={{
@@ -39,11 +36,10 @@ export default function Word({
       {word.split("").map((lett, index) => (
         <span
           key={index}
-          className={`border-r-[3px] border-transparent opacity-50`}
+          className={`border-r-[3px] border-transparent`}
           style={{
             color: colorCheck(typoLetters?.[index], lett),
             borderColor: cursorRight(index),
-            opacity: opacityCheck(typoLetters?.[index]),
           }}
         >
           {lett}
