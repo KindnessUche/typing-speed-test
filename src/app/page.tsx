@@ -16,7 +16,7 @@ export default async function Home() {
   const initialStory = await fetchStory();
 
   return (
-    <div className="flex flex-col items-center min-h-screen">
+    <div className="flex flex-col items-center min-h-screen font-sans">
       <TypePage
         initialText={initialStory}
         initialNextStory={initialStory}
